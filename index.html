@@ -276,7 +276,10 @@
         statusMsg.innerHTML = `<i class="bi bi-hourglass-split"></i> Creazione documento in corso...`;
 
         const GAS_URL =
-          "https://script.google.com/macros/s/AKfycbxEUup2JeJEIIyauPb1En9wWanklbFQR5z67XGAWT9vUGcnJfTx7x_0IGBp5je6f8MgfQ/exec"; // <--- INCOLLA QUI IL TUO URL
+          "https://corsproxy.io/?" +
+          encodeURIComponent(
+            "https://script.google.com/macros/s/AKfycbzVq3mqpK3hnTXbPikevlmyFyKcAMXgPUbP-oFhiXOLlIuRwEPXkz97sj2nOjbHukLV9A/exec"
+          ); // <--- INCOLLA QUI IL TUO URL
 
         try {
           const res = await fetch(GAS_URL, {

@@ -276,15 +276,23 @@
         statusMsg.innerHTML = `<i class="bi bi-hourglass-split"></i> Creazione documento in corso...`;
 
         const GAS_URL =
-          "https://script.google.com/macros/s/AKfycbzVq3mqpK3hnTXbPikevlmyFyKcAMXgPUbP-oFhiXOLlIuRwEPXkz97sj2nOjbHukLV9A/exec"; // <--- INCOLLA QUI IL TUO URL
+          "https://script.google.com/macros/s/AKfycbwwQtlrYvrSusWnJkYgtBqjVtialHfWV-QV6ry938SMJUAEUVwhKAj80XGej--v3u9z-A/exec"; // <--- INCOLLA QUI IL TUO URL
 
         try {
-          const res = await fetch(GAS_URL, {
-            method: "POST",
-            body: JSON.stringify(payload),
-            headers: { "Content-Type": "application/json" },
-          });
-          const result = await res.json();
+          const callbackName = "jsonpCallback_" + Date.now();
+
+          window[callbackName] = (result) => {
+            if (result.url) {
+              statusMsg.innerHTML = `<i class="bi bi-check-circle text-success"></i> Documento creato: <a href="${result.url}" target="_blank" class="fw-semibold">Apri Google Fogli</a>`;
+            } else {
+              statusMsg.innerHTML = `<i class="bi bi-x-circle text-danger"></i> Errore nella creazione del documento.`;
+            }
+          };
+
+          const script = document.createElement("script");
+          script.src = `${GAS_URL}?callback=${callbackName}`;
+          script.type = "text/javascript";
+          document.body.appendChild(script);
           if (result.url) {
             statusMsg.innerHTML = `<i class="bi bi-check-circle text-success"></i> Documento creato: <a href="${result.url}" target="_blank" class="fw-semibold">Apri Google Fogli</a>`;
           } else {

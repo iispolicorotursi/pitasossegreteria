@@ -289,8 +289,24 @@
             const div = document.getElementById(
               `hours-${chk.id.replace("res-", "")}`
             );
-            div.style.display = e.target.checked ? "block" : "none";
+
+            if (e.target.checked) {
+              div.style.display = "block";
+            } else {
+              div.style.display = "none";
+              // Deseleziona eventuali ore già spuntate
+              div
+                .querySelectorAll(".hour-checkbox")
+                .forEach((cb) => (cb.checked = false));
+            }
+
+            // Aggiorna lo stato del pulsante anche subito
             aggiornaBottone();
+
+            // Aggiunge listener per le ore, solo quando il docente è selezionato
+            div
+              .querySelectorAll(".hour-checkbox")
+              .forEach((cb) => cb.addEventListener("change", aggiornaBottone));
           })
         );
       }

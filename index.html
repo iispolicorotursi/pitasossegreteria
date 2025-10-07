@@ -169,17 +169,17 @@
         teachersWithLessonsDiv.innerHTML = teachersWithClass
           .map(
             (t) => `
-      <div class="col-md-4 col-12">
-        <div class="form-check mb-2">
-          <input class="form-check-input teacher-checkbox" type="checkbox" value="${t}" id="chk-${sanitizeId(
+        <div class="col-md-4 col-12">
+          <div class="form-check mb-2">
+            <input class="form-check-input teacher-checkbox" type="checkbox" value="${t}" id="chk-${sanitizeId(
               t
             )}">
-          <label class="form-check-label" for="chk-${sanitizeId(
-            t
-          )}">${t}</label>
+            <label class="form-check-label" for="chk-${sanitizeId(
+              t
+            )}">${t}</label>
+          </div>
         </div>
-      </div>
-    `
+      `
           )
           .join("");
 
@@ -209,31 +209,31 @@
             const hoursHtml = hours
               .map(
                 (h) => `
-        <div class="form-check form-check-inline">
-          <input class="form-check-input hour-checkbox" type="checkbox" id="${safeId}-${sanitizeId(
+          <div class="form-check form-check-inline">
+            <input class="form-check-input hour-checkbox" type="checkbox" id="${safeId}-${sanitizeId(
                   h
                 )}" value="${h}">
-          <label class="form-check-label" for="${safeId}-${sanitizeId(
+            <label class="form-check-label" for="${safeId}-${sanitizeId(
                   h
                 )}">${h}</label>
-        </div>
-      `
+          </div>
+        `
               )
               .join("");
 
             return `
-        <div class="card mb-3 p-2 shadow-sm">
-          <div class="form-check">
-            <input class="form-check-input residual-teacher" type="checkbox" id="res-${safeId}" value="${t}">
-            <label class="form-check-label fw-semibold" for="res-${safeId}">
-              <i class="bi bi-person"></i> ${t}
-            </label>
+          <div class="card mb-3 p-2 shadow-sm">
+            <div class="form-check">
+              <input class="form-check-input residual-teacher" type="checkbox" id="res-${safeId}" value="${t}">
+              <label class="form-check-label fw-semibold" for="res-${safeId}">
+                <i class="bi bi-person"></i> ${t}
+              </label>
+            </div>
+            <div class="hour-box" id="hours-${safeId}" style="display:none;">
+              ${hoursHtml}
+            </div>
           </div>
-          <div class="hour-box" id="hours-${safeId}" style="display:none;">
-            ${hoursHtml}
-          </div>
-        </div>
-      `;
+        `;
           })
           .join("");
 
@@ -276,7 +276,10 @@
         statusMsg.innerHTML = `<i class="bi bi-hourglass-split"></i> Creazione documento in corso...`;
 
         const GAS_URL =
-          "https://script.google.com/macros/s/AKfycbz0Zwrhu0VJ5EjATcr_2M_Bkqx0ve97H-1VSk54mbMinMjUr9w8dcWRrtUjfqRWI0a_Dg/exec"; // <--- il proxy Apps Script
+          "https://api.allorigins.win/raw?url=" +
+          encodeURIComponent(
+            "https://script.google.com/macros/s/AKfycbwwQtlrYvrSusWnJkYgtBqjVtialHfWV-QV6ry938SMJUAEUVwhKAj80XGej--v3u9z-A/exec"
+          ); // <--- il proxy Apps Script
 
         try {
           const res = await fetch(GAS_URL, {

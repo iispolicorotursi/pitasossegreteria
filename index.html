@@ -3,312 +3,365 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Segnalazione Assenze Docenti</title>
-
-    <!-- Bootstrap + Icone + Font Nunito -->
+    <title>PitaSOS - Versione Segreteria</title>
     <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
     <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&display=swap"
       rel="stylesheet"
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
       rel="stylesheet"
     />
-
     <style>
       body {
-        background-color: #f8f9fa;
         font-family: "Nunito", sans-serif;
+        background-color: #f5f7fb;
+        padding: 1.5rem 0.75rem;
       }
-      h1 {
+      .app-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+      }
+      .app-logo {
+        font-size: 2.2rem;
+        color: #0d6efd;
+        margin-bottom: 0.2rem;
+      }
+      .app-title {
         font-weight: 700;
         color: #0d6efd;
+        font-size: 1.7rem;
       }
-      h2 {
-        font-size: 1.3rem;
-        margin-top: 1.5rem;
-        color: #0d6efd;
-        font-weight: 600;
-      }
-      .card {
-        border-radius: 0.75rem;
-        border: none;
+      .app-subtitle {
+        font-size: 0.95rem;
+        color: #6c757d;
       }
       .section {
-        margin-bottom: 2rem;
+        border-radius: 1rem;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+        padding: 1.2rem;
+        background: #fff;
+        margin-bottom: 1.3rem;
       }
-      .hour-box {
-        margin-left: 1.5rem;
+      h4 {
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #0d6efd;
+        font-weight: 600;
+        font-size: 1.05rem;
+      }
+      input[type="date"],
+      .form-control {
+        border-radius: 0.6rem;
+        border: 1px solid #dee2e6;
+        padding: 0.55rem 0.8rem;
+        font-size: 0.95rem;
+      }
+      .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+      }
+      .form-check-label {
+        font-size: 0.95rem;
+      }
+      .btn-main {
+        background-color: #0d6efd;
+        color: white !important;
+        border: none;
+        font-weight: 600;
+        border-radius: 0.7rem;
+        transition: 0.2s;
+      }
+      .btn-main:hover {
+        background-color: #0b5ed7;
+      }
+      .btn-main:disabled {
+        background-color: #9bbcfb;
+        cursor: not-allowed;
+      }
+      .hours-box {
+        background: #f1f4f8;
+        border-radius: 0.6rem;
+        padding: 0.6rem 0.75rem;
         margin-top: 0.5rem;
       }
-      .btn-success i {
-        margin-right: 0.5rem;
+      .spin {
+        display: inline-block;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @media (max-width: 768px) {
+        .col-12.col-sm-6.col-md-4 {
+          flex: 0 0 100%;
+          max-width: 100%;
+        }
+      }
+      @media (min-width: 769px) and (max-width: 991px) {
+        .col-12.col-sm-6.col-md-4 {
+          flex: 0 0 50%;
+          max-width: 50%;
+        }
       }
     </style>
   </head>
-  <body class="container py-4">
-    <h1 class="text-center mb-4">
-      <i class="bi bi-calendar-check"></i> Segnalazione Assenze Docenti
-    </h1>
+  <body>
+    <div class="container" style="max-width: 700px">
+      <div class="app-header">
+        <i class="bi bi-person-workspace app-logo"></i>
+        <div class="app-title">PitaSOS</div>
+        <div class="app-subtitle">Versione per Segreteria</div>
+      </div>
 
-    <!-- Sezione 1: Scelta data -->
-    <div class="section card p-3 shadow-sm">
-      <h2><i class="bi bi-calendar-date"></i> 1️⃣ Seleziona la data</h2>
-      <input type="date" id="dateInput" class="form-control w-auto" />
-      <div id="loading" class="text-muted mt-2">Caricamento dati...</div>
-    </div>
+      <!-- Sezione 1 -->
+      <div class="section">
+        <h4><i class="bi bi-calendar3"></i> Selezionare una data</h4>
+        <input type="date" id="dateInput" class="form-control mb-2" />
+      </div>
 
-    <!-- Sezione 2: Docenti con lezione -->
-    <div class="section card p-3 shadow-sm">
-      <h2>
-        <i class="bi bi-person-x"></i> 2️⃣ Docenti con lezione (assenza intera
-        giornata)
-      </h2>
-      <div id="teachersWithLessons" class="row"></div>
-    </div>
+      <!-- Sezione 2 -->
+      <div class="section">
+        <h4>
+          <i class="bi bi-person-check"></i> Selezionare le assenze giornaliere
+        </h4>
+        <div id="teachersList" class="row gy-1"></div>
+      </div>
 
-    <!-- Sezione 3: Docenti residui -->
-    <div class="section card p-3 shadow-sm">
-      <h2>
-        <i class="bi bi-clock-history"></i> 3️⃣ Docenti residui (permessi orari)
-      </h2>
-      <div id="residualTeachers"></div>
-    </div>
+      <!-- Sezione 3 -->
+      <div class="section">
+        <h4>
+          <i class="bi bi-clock"></i> Selezionare i singoli permessi orari
+        </h4>
+        <div id="residualTeachers" class="row gy-2"></div>
+      </div>
 
-    <!-- Pulsante finale -->
-    <div class="text-center mt-4">
-      <button id="createSheetBtn" class="btn btn-success btn-lg shadow-sm">
-        <i class="bi bi-file-earmark-spreadsheet"></i> Crea Google Fogli
+      <button id="createBtn" class="btn btn-main w-100 py-2 mb-2" disabled>
+        <i class="bi bi-file-earmark-text"></i> Genera documento di riepilogo
       </button>
-      <div id="statusMsg" class="mt-3 text-muted"></div>
+      <button
+        id="resetBtn"
+        class="btn btn-outline-secondary w-100 py-2 mb-3"
+        disabled
+      >
+        <i class="bi bi-arrow-counterclockwise"></i> Annulla tutte le selezioni
+      </button>
+      <div id="statusMsg" class="text-center text-muted small"></div>
     </div>
 
     <script>
-      const dayNames = [
-        "Domenica",
-        "Lunedì",
-        "Martedì",
-        "Mercoledì",
-        "Giovedì",
-        "Venerdì",
-        "Sabato",
-      ];
-      const dateInput = document.getElementById("dateInput");
-      const teachersWithLessonsDiv = document.getElementById(
-        "teachersWithLessons"
-      );
-      const residualTeachersDiv = document.getElementById("residualTeachers");
-      const loading = document.getElementById("loading");
-      const createSheetBtn = document.getElementById("createSheetBtn");
-      const statusMsg = document.getElementById("statusMsg");
+      let orario = [],
+        docentiUnici = [],
+        permessiSelezionati = {};
 
-      let schedule = [];
-      let selectedTeachers = new Set();
-
-      // --- Funzione di sanificazione ID ---
-      function sanitizeId(str) {
-        return str.replace(/[^a-zA-Z0-9_-]/g, "_");
-      }
-
-      // Imposta la data odierna
-      const today = new Date();
-      dateInput.valueAsDate = today;
-
-      // Carica CSV locale
-      fetch("orario.csv")
-        .then((resp) => resp.text())
-        .then((csvText) => {
-          schedule = parseCSV(csvText);
-          loading.textContent = "Dati caricati ✅";
-          updateTeachers();
-        })
-        .catch((err) => {
-          loading.textContent = "Errore nel caricamento del file orario.csv";
-          console.error(err);
-        });
-
-      // Parser CSV
-      function parseCSV(csvText) {
-        const rows = csvText
-          .trim()
-          .split("\n")
-          .map((r) => r.split(","));
-        const headers = rows[0].map((h) => h.trim());
-        return rows.slice(1).map((r) => {
-          const obj = {};
-          headers.forEach((h, i) => (obj[h] = r[i]?.trim()));
-          return obj;
-        });
-      }
-
-      // Aggiorna UI
-      function updateTeachers() {
-        const selectedDate = new Date(dateInput.value);
-        const day = dayNames[selectedDate.getDay()];
-        const teachersForDay = schedule.filter((r) => r.Giorno === day);
-
-        if (teachersForDay.length === 0) {
-          teachersWithLessonsDiv.innerHTML = `<p class="text-muted">Nessun docente trovato per ${day}.</p>`;
-          residualTeachersDiv.innerHTML = "";
-          return;
-        }
-
-        const teachersWithClass = [
-          ...new Set(
-            teachersForDay
-              .filter((r) => r.Classe !== "POT")
-              .map((r) => r.Docente)
-          ),
-        ];
-
-        // Sezione 2
-        teachersWithLessonsDiv.innerHTML = teachersWithClass
-          .map(
-            (t) => `
-        <div class="col-md-4 col-12">
-          <div class="form-check mb-2">
-            <input class="form-check-input teacher-checkbox" type="checkbox" value="${t}" id="chk-${sanitizeId(
-              t
-            )}">
-            <label class="form-check-label" for="chk-${sanitizeId(
-              t
-            )}">${t}</label>
-          </div>
-        </div>
-      `
-          )
-          .join("");
-
-        document.querySelectorAll(".teacher-checkbox").forEach((chk) => {
-          chk.addEventListener("change", (e) => {
-            if (e.target.checked) selectedTeachers.add(e.target.value);
-            else selectedTeachers.delete(e.target.value);
-            renderResidualTeachers(day, teachersForDay, teachersWithClass);
+      document.addEventListener("DOMContentLoaded", () => {
+        fetch("orario.csv")
+          .then((r) => r.text())
+          .then((t) => {
+            const righe = t
+              .split("\n")
+              .map((r) => r.trim())
+              .filter((r) => r);
+            const intestazione = righe.shift().split(",");
+            orario = righe.map((r) => {
+              const campi = r.split(",");
+              const obj = {};
+              intestazione.forEach(
+                (col, i) => (obj[col.trim()] = (campi[i] || "").trim())
+              );
+              return obj;
+            });
+            document.getElementById("dateInput").valueAsDate = new Date();
+            aggiornaDocenti();
           });
-        });
-
-        renderResidualTeachers(day, teachersForDay, teachersWithClass);
-      }
-
-      // Sezione 3
-      function renderResidualTeachers(day, teachersForDay, teachersWithClass) {
-        const unselectedWithClass = teachersWithClass.filter(
-          (t) => !selectedTeachers.has(t)
-        );
-
-        residualTeachersDiv.innerHTML = unselectedWithClass
-          .map((t) => {
-            const safeId = sanitizeId(t);
-            const hours = teachersForDay
-              .filter((r) => r.Docente === t && r.Classe !== "POT")
-              .map((r) => `${r.OraInizio} - ${r.OraFine} (${r.Classe})`);
-            const hoursHtml = hours
-              .map(
-                (h) => `
-          <div class="form-check form-check-inline">
-            <input class="form-check-input hour-checkbox" type="checkbox" id="${safeId}-${sanitizeId(
-                  h
-                )}" value="${h}">
-            <label class="form-check-label" for="${safeId}-${sanitizeId(
-                  h
-                )}">${h}</label>
-          </div>
-        `
-              )
-              .join("");
-
-            return `
-          <div class="card mb-3 p-2 shadow-sm">
-            <div class="form-check">
-              <input class="form-check-input residual-teacher" type="checkbox" id="res-${safeId}" value="${t}">
-              <label class="form-check-label fw-semibold" for="res-${safeId}">
-                <i class="bi bi-person"></i> ${t}
-              </label>
-            </div>
-            <div class="hour-box" id="hours-${safeId}" style="display:none;">
-              ${hoursHtml}
-            </div>
-          </div>
-        `;
-          })
-          .join("");
-
-        document.querySelectorAll(".residual-teacher").forEach((chk) => {
-          chk.addEventListener("change", (e) => {
-            const safeId = sanitizeId(e.target.value);
-            const box = document.getElementById(`hours-${safeId}`);
-            box.style.display = e.target.checked ? "block" : "none";
-          });
-        });
-      }
-
-      // === CREAZIONE GOOGLE FOGLI ===
-      createSheetBtn.addEventListener("click", async () => {
-        const date = new Date(dateInput.value);
-        const formattedDate = `${String(date.getDate()).padStart(
-          2,
-          "0"
-        )}${String(date.getMonth() + 1).padStart(2, "0")}${date.getFullYear()}`;
-        const sheetName = `SOSTITUZIONI_${formattedDate}`;
-
-        const assenzeGiornaliere = [...selectedTeachers];
-        const permessiOrari = [];
 
         document
-          .querySelectorAll(".residual-teacher:checked")
-          .forEach((chk) => {
-            const teacher = chk.value;
-            const safeId = teacher.replace(/[^a-zA-Z0-9_-]/g, "_");
-            const hours = [
-              ...document.querySelectorAll(
-                `#hours-${safeId} .hour-checkbox:checked`
-              ),
-            ].map((h) => h.value);
-            if (hours.length > 0)
-              permessiOrari.push({ docente: teacher, ore: hours });
-          });
+          .getElementById("dateInput")
+          .addEventListener("change", aggiornaDocenti);
+        document.getElementById("createBtn").addEventListener("click", creaCSV);
+        document
+          .getElementById("resetBtn")
+          .addEventListener("click", resetScelte);
+      });
 
-        const payload = { sheetName, assenzeGiornaliere, permessiOrari };
-        statusMsg.innerHTML = `<i class="bi bi-hourglass-split"></i> Creazione documento in corso...`;
+      function aggiornaDocenti() {
+        const giornoSel = document.getElementById("dateInput").value;
+        if (!giornoSel) return;
+        const giorno = new Date(giornoSel).toLocaleDateString("it-IT", {
+          weekday: "long",
+        });
+        const nomeGiorno = giorno.charAt(0).toUpperCase() + giorno.slice(1);
+        const teachersDiv = document.getElementById("teachersList");
+        const residualDiv = document.getElementById("residualTeachers");
+        teachersDiv.innerHTML = residualDiv.innerHTML = "";
 
-        const GAS_URL =
-          "https://script.google.com/macros/s/AKfycbwzVLZDIWBb5D4ALmotg_H7ra1mxKJVBpSplJjJH81ZXScFbtfhp0Z9vbNvJyd-W-2mQw/exec"; // <--- il proxy Apps Script
+        const docentiGiorno = orario.filter(
+          (r) =>
+            r.Giorno === nomeGiorno &&
+            r.Classe !== "POT" &&
+            !["COLLETTA O.", "BRUNO E."].includes(r.Docente)
+        );
 
-        try {
-          const res = await fetch(GAS_URL, {
+        const docSet = new Set(docentiGiorno.map((r) => r.Docente));
+        docentiUnici = Array.from(docSet).sort((a, b) =>
+          a.split(" ")[0].localeCompare(b.split(" ")[0])
+        );
+
+        docentiUnici.forEach((d) => {
+          const safe = d.replace(/[^a-zA-Z0-9_-]/g, "_");
+          teachersDiv.insertAdjacentHTML(
+            "beforeend",
+            `
+        <div class="col-12 col-sm-6 col-md-4 mb-1">
+          <div class="form-check">
+            <input class="form-check-input docente-check" type="checkbox" id="chk-${safe}" value="${d}">
+            <label class="form-check-label" for="chk-${safe}">${d}</label>
+          </div>
+        </div>`
+          );
+        });
+
+        aggiornaPermessi(docentiGiorno);
+        document.querySelectorAll(".docente-check").forEach((chk) =>
+          chk.addEventListener("change", () => {
+            aggiornaPermessi(docentiGiorno);
+            aggiornaBottone();
+          })
+        );
+      }
+
+      function aggiornaPermessi(docentiGiorno) {
+        const resDiv = document.getElementById("residualTeachers");
+        resDiv.innerHTML = "";
+        const assenti = [
+          ...document.querySelectorAll(".docente-check:checked"),
+        ].map((chk) => chk.value);
+        const residui = docentiUnici.filter((d) => !assenti.includes(d));
+        residui.forEach((d) => {
+          const safe = d.replace(/[^a-zA-Z0-9_-]/g, "_");
+          const ore = docentiGiorno
+            .filter((r) => r.Docente === d)
+            .map((r) => `${r.OraInizio}-${r.OraFine}`)
+            .filter((o) => o);
+          resDiv.insertAdjacentHTML(
+            "beforeend",
+            `
+        <div class="col-12 col-md-6 mb-2">
+          <div class="form-check mb-1">
+            <input class="form-check-input residual-check" type="checkbox" id="res-${safe}">
+            <label class="form-check-label fw-semibold" for="res-${safe}">${d}</label>
+          </div>
+          <div id="hours-${safe}" class="hours-box" style="display:none;">
+            ${ore
+              .map(
+                (o) => `
+              <div class="form-check">
+                <input class="form-check-input hour-checkbox" type="checkbox" value="${o}" id="${safe}-${o}">
+                <label class="form-check-label" for="${safe}-${o}">${o}</label>
+              </div>`
+              )
+              .join("")}
+          </div>
+        </div>`
+          );
+        });
+
+        document.querySelectorAll(".residual-check").forEach((chk) =>
+          chk.addEventListener("change", (e) => {
+            const div = document.getElementById(
+              `hours-${chk.id.replace("res-", "")}`
+            );
+            div.style.display = e.target.checked ? "block" : "none";
+            aggiornaBottone();
+          })
+        );
+      }
+
+      function aggiornaBottone() {
+        const checked =
+          document.querySelectorAll(
+            ".docente-check:checked, .hour-checkbox:checked"
+          ).length > 0;
+        document.getElementById("createBtn").disabled = !checked;
+        document.getElementById("resetBtn").disabled = !checked;
+      }
+
+      function resetScelte() {
+        document
+          .querySelectorAll("input[type=checkbox]")
+          .forEach((cb) => (cb.checked = false));
+        document
+          .querySelectorAll(".hours-box")
+          .forEach((b) => (b.style.display = "none"));
+        document.getElementById("statusMsg").innerHTML = "";
+        aggiornaBottone();
+      }
+
+      function creaCSV() {
+        const assenze = [
+          ...document.querySelectorAll(".docente-check:checked"),
+        ].map((c) => c.value);
+        const permessi = [];
+        document.querySelectorAll(".residual-check:checked").forEach((chk) => {
+          const docente = chk.nextElementSibling.textContent;
+          const safe = docente.replace(/[^a-zA-Z0-9_-]/g, "_");
+          const ore = [
+            ...document.querySelectorAll(
+              `#hours-${safe} .hour-checkbox:checked`
+            ),
+          ].map((o) => o.value);
+          if (ore.length) permessi.push({ docente, ore });
+        });
+
+        const dateSel = new Date(document.getElementById("dateInput").value);
+        const giorno = dateSel
+          .toLocaleDateString("it-IT", { weekday: "short" })
+          .replace(".", "")
+          .toLowerCase();
+        const fileDate = `${String(dateSel.getDate()).padStart(2, "0")}${String(
+          dateSel.getMonth() + 1
+        ).padStart(2, "0")}${dateSel.getFullYear()}`;
+        const payload = { giorno, fileDate, assenze, permessi };
+
+        document.getElementById("statusMsg").innerHTML =
+          "<i class='bi bi-arrow-clockwise spin text-primary'></i> Invio dati al server...";
+
+        fetch(
+          "https://antoniofittipaldi.it/progetti/pitasos/assenze_permessi.php",
+          {
             method: "POST",
-            redirect: "follow",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            mode: "cors",
+          }
+        )
+          .then((r) => r.json())
+          .then((res) => {
+            if (res.success) {
+              document.getElementById("statusMsg").innerHTML =
+                "✅ Dati inviati e file creati con successo.";
+              setTimeout(
+                () => (document.getElementById("statusMsg").innerHTML = ""),
+                5000
+              );
+            } else throw new Error(res.error);
+          })
+          .catch((err) => {
+            document.getElementById("statusMsg").innerHTML =
+              "❌ Errore: " + err.message;
           });
-
-          const text = await res.text(); // leggiamo il testo “grezzo”
-          let result = null;
-          try {
-            result = JSON.parse(text); // proviamo a convertirlo in JSON
-          } catch {
-            console.warn("Risposta non in formato JSON:", text);
-          }
-
-          if (result && result.url) {
-            statusMsg.innerHTML = `<i class="bi bi-check-circle text-success"></i> Documento creato: <a href="${result.url}" target="_blank" class="fw-semibold">Apri Google Fogli</a>`;
-          } else {
-            statusMsg.innerHTML = `<i class="bi bi-x-circle text-danger"></i> Errore nella creazione del documento.`;
-          }
-        } catch (err) {
-          console.error(err);
-          statusMsg.innerHTML = `<i class="bi bi-bug text-danger"></i> Errore durante la creazione del documento.`;
-        }
-      });
-
-      dateInput.addEventListener("change", () => {
-        selectedTeachers.clear();
-        updateTeachers();
-      });
+      }
     </script>
   </body>
 </html>

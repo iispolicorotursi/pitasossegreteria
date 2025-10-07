@@ -280,7 +280,7 @@
 
         try {
           const res = await fetch(GAS_URL, {
-            method: "POST",
+            method: "GET",
             body: JSON.stringify(payload),
             headers: { "Content-Type": "application/json" },
           });

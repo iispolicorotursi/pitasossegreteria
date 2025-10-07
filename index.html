@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Segnalazione Assenze Docenti</title>
+
+    <!-- Bootstrap + Icone + Font Nunito -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        background-color: #f8f9fa;
+        font-family: "Nunito", sans-serif;
+      }
+      h1 {
+        font-weight: 700;
+        color: #0d6efd;
+      }
+      h2 {
+        font-size: 1.3rem;
+        margin-top: 1.5rem;
+        color: #0d6efd;
+        font-weight: 600;
+      }
+      .card {
+        border-radius: 0.75rem;
+        border: none;
+      }
+      .section {
+        margin-bottom: 2rem;
+      }
+      .hour-box {
+        margin-left: 1.5rem;
+        margin-top: 0.5rem;
+      }
+      .btn-success i {
+        margin-right: 0.5rem;
+      }
+    </style>
+  </head>
+  <body class="container py-4">
+    <h1 class="text-center mb-4">
+      <i class="bi bi-calendar-check"></i> Segnalazione Assenze Docenti
+    </h1>
+
+    <!-- Sezione 1: Scelta data -->
+    <div class="section card p-3 shadow-sm">
+      <h2><i class="bi bi-calendar-date"></i> 1️⃣ Seleziona la data</h2>
+      <input type="date" id="dateInput" class="form-control w-auto" />
+      <div id="loading" class="text-muted mt-2">Caricamento dati...</div>
+    </div>
+
+    <!-- Sezione 2: Docenti con lezione -->
+    <div class="section card p-3 shadow-sm">
+      <h2>
+        <i class="bi bi-person-x"></i> 2️⃣ Docenti con lezione (assenza intera
+        giornata)
+      </h2>
+      <div id="teachersWithLessons" class="row"></div>
+    </div>
+
+    <!-- Sezione 3: Docenti residui -->
+    <div class="section card p-3 shadow-sm">
+      <h2>
+        <i class="bi bi-clock-history"></i> 3️⃣ Docenti residui (permessi orari)
+      </h2>
+      <div id="residualTeachers"></div>
+    </div>
+
+    <!-- Pulsante finale -->
+    <div class="text-center mt-4">
+      <button id="createSheetBtn" class="btn btn-success btn-lg shadow-sm">
+        <i class="bi bi-file-earmark-spreadsheet"></i> Crea Google Fogli
+      </button>
+      <div id="statusMsg" class="mt-3 text-muted"></div>
+    </div>
+
+    <script>
+      const dayNames = [
+        "Domenica",
+        "Lunedì",
+        "Martedì",
+        "Mercoledì",
+        "Giovedì",
+        "Venerdì",
+        "Sabato",
+      ];
+      const dateInput = document.getElementById("dateInput");
+      const teachersWithLessonsDiv = document.getElementById(
+        "teachersWithLessons"
+      );
+      const residualTeachersDiv = document.getElementById("residualTeachers");
+      const loading = document.getElementById("loading");
+      const createSheetBtn = document.getElementById("createSheetBtn");
+      const statusMsg = document.getElementById("statusMsg");
+
+      let schedule = [];
+      let selectedTeachers = new Set();
+
+      // --- Funzione di sanificazione ID ---
+      function sanitizeId(str) {
+        return str.replace(/[^a-zA-Z0-9_-]/g, "_");
+      }
+
+      // Imposta la data odierna
+      const today = new Date();
+      dateInput.valueAsDate = today;
+
+      // Carica CSV locale
+      fetch("orario.csv")
+        .then((resp) => resp.text())
+        .then((csvText) => {
+          schedule = parseCSV(csvText);
+          loading.textContent = "Dati caricati ✅";
+          updateTeachers();
+        })
+        .catch((err) => {
+          loading.textContent = "Errore nel caricamento del file orario.csv";
+          console.error(err);
+        });
+
+      // Parser CSV
+      function parseCSV(csvText) {
+        const rows = csvText
+          .trim()
+          .split("\n")
+          .map((r) => r.split(","));
+        const headers = rows[0].map((h) => h.trim());
+        return rows.slice(1).map((r) => {
+          const obj = {};
+          headers.forEach((h, i) => (obj[h] = r[i]?.trim()));
+          return obj;
+        });
+      }
+
+      // Aggiorna UI
+      function updateTeachers() {
+        const selectedDate = new Date(dateInput.value);
+        const day = dayNames[selectedDate.getDay()];
+        const teachersForDay = schedule.filter((r) => r.Giorno === day);
+
+        if (teachersForDay.length === 0) {
+          teachersWithLessonsDiv.innerHTML = `<p class="text-muted">Nessun docente trovato per ${day}.</p>`;
+          residualTeachersDiv.innerHTML = "";
+          return;
+        }
+
+        const teachersWithClass = [
+          ...new Set(
+            teachersForDay
+              .filter((r) => r.Classe !== "POT")
+              .map((r) => r.Docente)
+          ),
+        ];
+
+        // Sezione 2
+        teachersWithLessonsDiv.innerHTML = teachersWithClass
+          .map(
+            (t) => `
+      <div class="col-md-4 col-12">
+        <div class="form-check mb-2">
+          <input class="form-check-input teacher-checkbox" type="checkbox" value="${t}" id="chk-${sanitizeId(
+              t
+            )}">
+          <label class="form-check-label" for="chk-${sanitizeId(
+            t
+          )}">${t}</label>
+        </div>
+      </div>
+    `
+          )
+          .join("");
+
+        document.querySelectorAll(".teacher-checkbox").forEach((chk) => {
+          chk.addEventListener("change", (e) => {
+            if (e.target.checked) selectedTeachers.add(e.target.value);
+            else selectedTeachers.delete(e.target.value);
+            renderResidualTeachers(day, teachersForDay, teachersWithClass);
+          });
+        });
+
+        renderResidualTeachers(day, teachersForDay, teachersWithClass);
+      }
+
+      // Sezione 3
+      function renderResidualTeachers(day, teachersForDay, teachersWithClass) {
+        const unselectedWithClass = teachersWithClass.filter(
+          (t) => !selectedTeachers.has(t)
+        );
+
+        residualTeachersDiv.innerHTML = unselectedWithClass
+          .map((t) => {
+            const safeId = sanitizeId(t);
+            const hours = teachersForDay
+              .filter((r) => r.Docente === t && r.Classe !== "POT")
+              .map((r) => `${r.OraInizio} - ${r.OraFine} (${r.Classe})`);
+            const hoursHtml = hours
+              .map(
+                (h) => `
+        <div class="form-check form-check-inline">
+          <input class="form-check-input hour-checkbox" type="checkbox" id="${safeId}-${sanitizeId(
+                  h
+                )}" value="${h}">
+          <label class="form-check-label" for="${safeId}-${sanitizeId(
+                  h
+                )}">${h}</label>
+        </div>
+      `
+              )
+              .join("");
+
+            return `
+        <div class="card mb-3 p-2 shadow-sm">
+          <div class="form-check">
+            <input class="form-check-input residual-teacher" type="checkbox" id="res-${safeId}" value="${t}">
+            <label class="form-check-label fw-semibold" for="res-${safeId}">
+              <i class="bi bi-person"></i> ${t}
+            </label>
+          </div>
+          <div class="hour-box" id="hours-${safeId}" style="display:none;">
+            ${hoursHtml}
+          </div>
+        </div>
+      `;
+          })
+          .join("");
+
+        document.querySelectorAll(".residual-teacher").forEach((chk) => {
+          chk.addEventListener("change", (e) => {
+            const safeId = sanitizeId(e.target.value);
+            const box = document.getElementById(`hours-${safeId}`);
+            box.style.display = e.target.checked ? "block" : "none";
+          });
+        });
+      }
+
+      // === CREAZIONE GOOGLE FOGLI ===
+      createSheetBtn.addEventListener("click", async () => {
+        const date = new Date(dateInput.value);
+        const formattedDate = `${String(date.getDate()).padStart(
+          2,
+          "0"
+        )}${String(date.getMonth() + 1).padStart(2, "0")}${date.getFullYear()}`;
+        const sheetName = `SOSTITUZIONI_${formattedDate}`;
+
+        const assenzeGiornaliere = [...selectedTeachers];
+        const permessiOrari = [];
+
+        document
+          .querySelectorAll(".residual-teacher:checked")
+          .forEach((chk) => {
+            const teacher = chk.value;
+            const safeId = sanitizeId(teacher);
+            const hours = [
+              ...document.querySelectorAll(
+                `#hours-${safeId} .hour-checkbox:checked`
+              ),
+            ].map((h) => h.value);
+            if (hours.length > 0)
+              permessiOrari.push({ docente: teacher, ore: hours });
+          });
+
+        const payload = { sheetName, assenzeGiornaliere, permessiOrari };
+        statusMsg.innerHTML = `<i class="bi bi-hourglass-split"></i> Creazione documento in corso...`;
+
+        const GAS_URL =
+          "https://script.google.com/macros/s/AKfycbz31XXPHtxaJJhH6z0ZB7g_9Ui6lGjm9g7HrhEbZgB5H7B3e3dgsyYQPkEughYVZCXdkQ/exec"; // <--- INCOLLA QUI IL TUO URL
+
+        try {
+          const res = await fetch(GAS_URL, {
+            method: "POST",
+            body: JSON.stringify(payload),
+            headers: { "Content-Type": "application/json" },
+          });
+          const result = await res.json();
+          if (result.url) {
+            statusMsg.innerHTML = `<i class="bi bi-check-circle text-success"></i> Documento creato: <a href="${result.url}" target="_blank" class="fw-semibold">Apri Google Fogli</a>`;
+          } else {
+            statusMsg.innerHTML = `<i class="bi bi-x-circle text-danger"></i> Errore nella creazione del documento.`;
+          }
+        } catch (err) {
+          console.error(err);
+          statusMsg.innerHTML = `<i class="bi bi-bug text-danger"></i> Errore durante la creazione del documento.`;
+        }
+      });
+
+      dateInput.addEventListener("change", () => {
+        selectedTeachers.clear();
+        updateTeachers();
+      });
+    </script>
+  </body>
+</html>

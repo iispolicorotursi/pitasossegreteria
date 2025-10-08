@@ -240,105 +240,125 @@
       function aggiornaDocenti() {
         const giornoSel = document.getElementById("dateInput").value;
         if (!giornoSel) return;
+
         const giorno = new Date(giornoSel).toLocaleDateString("it-IT", {
           weekday: "long",
         });
         const nomeGiorno = giorno.charAt(0).toUpperCase() + giorno.slice(1);
+
         const teachersDiv = document.getElementById("teachersList");
         const residualDiv = document.getElementById("residualTeachers");
         teachersDiv.innerHTML = residualDiv.innerHTML = "";
 
-        const docentiGiorno = orario.filter(
-          (r) =>
-            r.Giorno === nomeGiorno &&
-            r.Classe !== "POT" &&
-            !["COLLETTA O.", "BRUNO E."].includes(r.Docente)
+        // Filtra tutti i record del giorno selezionato
+        const lezioniGiorno = orario.filter((r) => r.Giorno === nomeGiorno);
+
+        // Trova i docenti che hanno almeno un'ora NON POT
+        const docentiConLezione = lezioniGiorno
+          .filter(
+            (r) =>
+              r.Classe !== "POT" &&
+              !["COLLETTA O.", "BRUNO E."].includes(r.Docente)
+          )
+          .map((r) => r.Docente);
+
+        // Escludi chi ha solo potenziamento in quel giorno
+        const docentiValidi = [...new Set(docentiConLezione)].sort((a, b) =>
+          a.localeCompare(b, "it", { sensitivity: "base" })
         );
 
-        const docSet = new Set(docentiGiorno.map((r) => r.Docente));
-        docentiUnici = Array.from(docSet).sort((a, b) =>
-          a.split(" ")[0].localeCompare(b.split(" ")[0])
-        );
-
-        docentiUnici.forEach((d) => {
+        // Popola la sezione “Assenze giornaliere”
+        docentiValidi.forEach((d) => {
           const safe = d.replace(/[^a-zA-Z0-9_-]/g, "_");
           teachersDiv.insertAdjacentHTML(
             "beforeend",
             `
-        <div class="col-12 col-sm-6 col-md-4 mb-1">
-          <div class="form-check">
-            <input class="form-check-input docente-check" type="checkbox" id="chk-${safe}" value="${d}">
-            <label class="form-check-label" for="chk-${safe}">${d}</label>
-          </div>
-        </div>`
+      <div class="col-12 col-sm-6 col-md-4 mb-1">
+        <div class="form-check">
+          <input class="form-check-input docente-check" type="checkbox" id="chk-${safe}" value="${d}">
+          <label class="form-check-label" for="chk-${safe}">${d}</label>
+        </div>
+      </div>`
           );
         });
 
-        aggiornaPermessi(docentiGiorno);
+        aggiornaPermessi(lezioniGiorno);
         document.querySelectorAll(".docente-check").forEach((chk) =>
           chk.addEventListener("change", () => {
-            aggiornaPermessi(docentiGiorno);
+            aggiornaPermessi(lezioniGiorno);
             aggiornaBottone();
           })
         );
       }
 
-      function aggiornaPermessi(docentiGiorno) {
+      function aggiornaPermessi(lezioniGiorno) {
         const resDiv = document.getElementById("residualTeachers");
         resDiv.innerHTML = "";
+
         const assenti = [
           ...document.querySelectorAll(".docente-check:checked"),
         ].map((chk) => chk.value);
-        const residui = docentiUnici.filter((d) => !assenti.includes(d));
-        residui.forEach((d) => {
+
+        // Filtra docenti validi (che hanno lezioni non POT)
+        const docentiValidi = lezioniGiorno
+          .filter(
+            (r) =>
+              r.Classe !== "POT" &&
+              !["COLLETTA O.", "BRUNO E."].includes(r.Docente)
+          )
+          .map((r) => r.Docente);
+        const docentiResidui = [
+          ...new Set(docentiValidi.filter((d) => !assenti.includes(d))),
+        ].sort((a, b) => a.localeCompare(b, "it", { sensitivity: "base" }));
+
+        // Crea le card dei docenti residui
+        docentiResidui.forEach((d) => {
           const safe = d.replace(/[^a-zA-Z0-9_-]/g, "_");
-          const ore = docentiGiorno
-            .filter((r) => r.Docente === d)
+          // Mostra solo ore NON POT
+          const ore = lezioniGiorno
+            .filter((r) => r.Docente === d && r.Classe !== "POT")
             .map((r) => `${r.OraInizio}-${r.OraFine}`)
             .filter((o) => o);
+
           resDiv.insertAdjacentHTML(
             "beforeend",
             `
-        <div class="col-12 col-md-6 mb-2">
-          <div class="form-check mb-1">
-            <input class="form-check-input residual-check" type="checkbox" id="res-${safe}">
-            <label class="form-check-label fw-semibold" for="res-${safe}">${d}</label>
-          </div>
-          <div id="hours-${safe}" class="hours-box" style="display:none;">
-            ${ore
-              .map(
-                (o) => `
-              <div class="form-check">
-                <input class="form-check-input hour-checkbox" type="checkbox" value="${o}" id="${safe}-${o}">
-                <label class="form-check-label" for="${safe}-${o}">${o}</label>
-              </div>`
-              )
-              .join("")}
-          </div>
-        </div>`
+      <div class="col-12 col-md-6 mb-2">
+        <div class="form-check mb-1">
+          <input class="form-check-input residual-check" type="checkbox" id="res-${safe}">
+          <label class="form-check-label fw-semibold" for="res-${safe}">${d}</label>
+        </div>
+        <div id="hours-${safe}" class="hours-box" style="display:none;">
+          ${ore
+            .map(
+              (o) => `
+            <div class="form-check">
+              <input class="form-check-input hour-checkbox" type="checkbox" value="${o}" id="${safe}-${o}">
+              <label class="form-check-label" for="${safe}-${o}">${o}</label>
+            </div>`
+            )
+            .join("")}
+        </div>
+      </div>`
           );
         });
 
+        // Listener per click su docenti residui
         document.querySelectorAll(".residual-check").forEach((chk) =>
           chk.addEventListener("change", (e) => {
             const div = document.getElementById(
               `hours-${chk.id.replace("res-", "")}`
             );
-
             if (e.target.checked) {
               div.style.display = "block";
             } else {
               div.style.display = "none";
-              // Deseleziona eventuali ore già spuntate
               div
                 .querySelectorAll(".hour-checkbox")
                 .forEach((cb) => (cb.checked = false));
             }
-
-            // Aggiorna lo stato del pulsante anche subito
             aggiornaBottone();
 
-            // Aggiunge listener per le ore, solo quando il docente è selezionato
             div
               .querySelectorAll(".hour-checkbox")
               .forEach((cb) => cb.addEventListener("change", aggiornaBottone));

@@ -257,7 +257,7 @@
         const docentiConLezione = lezioniGiorno
           .filter(
             (r) =>
-              r.Classe !== "POT" &&
+              // r.Classe !== "POT" &&
               !["COLLETTA O.", "BRUNO E."].includes(r.Docente)
           )
           .map((r) => r.Docente);
@@ -303,7 +303,7 @@
         const docentiValidi = lezioniGiorno
           .filter(
             (r) =>
-              r.Classe !== "POT" &&
+              // r.Classe !== "POT" &&
               !["COLLETTA O.", "BRUNO E."].includes(r.Docente)
           )
           .map((r) => r.Docente);
@@ -316,7 +316,7 @@
           const safe = d.replace(/[^a-zA-Z0-9_-]/g, "_");
           // Mostra solo ore NON POT
           const ore = lezioniGiorno
-            .filter((r) => r.Docente === d && r.Classe !== "POT")
+            .filter((r) => r.Docente === d /* && r.Classe !== "POT"*/)
             .map((r) => `${r.OraInizio}-${r.OraFine}`)
             .filter((o) => o);
 

@@ -34,7 +34,7 @@
       .app-title {
         font-weight: 700;
         color: #0d6efd;
-        font-size: 1.7rem;
+        font-size: 1.9rem;
       }
       .app-subtitle {
         font-size: 0.95rem;
@@ -55,20 +55,6 @@
         color: #0d6efd;
         font-weight: 600;
         font-size: 1.05rem;
-      }
-      input[type="date"],
-      .form-control {
-        border-radius: 0.6rem;
-        border: 1px solid #dee2e6;
-        padding: 0.55rem 0.8rem;
-        font-size: 0.95rem;
-      }
-      .form-check-input:checked {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
-      }
-      .form-check-label {
-        font-size: 0.95rem;
       }
       .btn-main {
         background-color: #0d6efd;
@@ -91,38 +77,6 @@
         padding: 0.6rem 0.75rem;
         margin-top: 0.5rem;
       }
-      .spin {
-        display: inline-block;
-        animation: spin 1s linear infinite;
-      }
-      @keyframes spin {
-        from {
-          transform: rotate(0deg);
-        }
-        to {
-          transform: rotate(360deg);
-        }
-      }
-      @media (max-width: 768px) {
-        .col-12.col-sm-6.col-md-4 {
-          flex: 0 0 100%;
-          max-width: 100%;
-        }
-      }
-      @media (min-width: 769px) and (max-width: 991px) {
-        .col-12.col-sm-6.col-md-4 {
-          flex: 0 0 50%;
-          max-width: 50%;
-        }
-      }
-
-      .app-title {
-        font-family: "Nunito", sans-serif;
-        font-weight: 700;
-        color: #0d6efd;
-        font-size: 1.9rem;
-      }
-      /* --- Pulsante fisso dinamico centrato --- */
       .floating-btn-container {
         position: fixed;
         bottom: 0;
@@ -132,15 +86,13 @@
         max-width: 700px;
         background: rgba(245, 247, 251, 0.95);
         backdrop-filter: blur(5px);
-        padding: 1rem 1.25rem 1.25rem 1.25rem; /* più respiro */
+        padding: 1rem 1.25rem 1.25rem 1.25rem;
         box-shadow: 0 -3px 8px rgba(0, 0, 0, 0.05);
         border-top-left-radius: 1rem;
         border-top-right-radius: 1rem;
         z-index: 1000;
         transition: all 0.3s ease;
       }
-
-      /* Quando arriva a fine pagina, torna “statico” */
       .floating-btn-container.hide {
         position: static;
         transform: none;
@@ -150,12 +102,12 @@
         padding: 0;
         border-radius: 0;
       }
-      /* Spazio extra sotto l’ultima sezione per non far toccare i pulsanti */
       #residualTeachers {
         margin-bottom: 6rem;
       }
     </style>
   </head>
+
   <body>
     <div class="container" style="max-width: 700px">
       <div class="app-header">
@@ -204,8 +156,8 @@
 
     <script>
       let orario = [],
-        docentiUnici = [],
-        permessiSelezionati = {};
+        scelteAssenze = new Set(),
+        sceltePermessi = {};
 
       document.addEventListener("DOMContentLoaded", () => {
         fetch("orario.csv")
@@ -250,42 +202,45 @@
         const residualDiv = document.getElementById("residualTeachers");
         teachersDiv.innerHTML = residualDiv.innerHTML = "";
 
-        // Filtra tutti i record del giorno selezionato
         const lezioniGiorno = orario.filter((r) => r.Giorno === nomeGiorno);
-
-        // Trova i docenti che hanno almeno un'ora NON POT
-        const docentiConLezione = lezioniGiorno
+        const docentiTotali = lezioniGiorno
           .filter(
             (r) =>
-              // r.Classe !== "POT" &&
-              !["COLLETTA O.", "BRUNO E."].includes(r.Docente)
+              ![
+                "COLLETTA O.",
+                "BRUNO E.",
+                "RINA T.",
+                "BATTIFARANO C.",
+              ].includes(r.Docente)
           )
           .map((r) => r.Docente);
-
-        // Escludi chi ha solo potenziamento in quel giorno
-        const docentiValidi = [...new Set(docentiConLezione)].sort((a, b) =>
+        const docentiValidi = [...new Set(docentiTotali)].sort((a, b) =>
           a.localeCompare(b, "it", { sensitivity: "base" })
         );
 
-        // Popola la sezione “Assenze giornaliere”
+        // --- Sezione 1: Assenze giornaliere
         docentiValidi.forEach((d) => {
           const safe = d.replace(/[^a-zA-Z0-9_-]/g, "_");
           teachersDiv.insertAdjacentHTML(
             "beforeend",
             `
-      <div class="col-12 col-sm-6 col-md-4 mb-1">
-        <div class="form-check">
-          <input class="form-check-input docente-check" type="checkbox" id="chk-${safe}" value="${d}">
-          <label class="form-check-label" for="chk-${safe}">${d}</label>
-        </div>
-      </div>`
+            <div class="col-12 col-sm-6 col-md-4 mb-1">
+              <div class="form-check">
+                <input class="form-check-input docente-check" type="checkbox" id="chk-${safe}" value="${d}" ${
+              scelteAssenze.has(d) ? "checked" : ""
+            }>
+                <label class="form-check-label" for="chk-${safe}">${d}</label>
+              </div>
+            </div>`
           );
         });
 
         aggiornaPermessi(lezioniGiorno);
+
         document.querySelectorAll(".docente-check").forEach((chk) =>
-          chk.addEventListener("change", () => {
-            aggiornaPermessi(lezioniGiorno);
+          chk.addEventListener("change", (e) => {
+            if (e.target.checked) scelteAssenze.add(e.target.value);
+            else scelteAssenze.delete(e.target.value);
             aggiornaBottone();
           })
         );
@@ -295,88 +250,108 @@
         const resDiv = document.getElementById("residualTeachers");
         resDiv.innerHTML = "";
 
-        const assenti = [
-          ...document.querySelectorAll(".docente-check:checked"),
-        ].map((chk) => chk.value);
-
-        // Filtra docenti validi (che hanno lezioni non POT)
-        const docentiValidi = lezioniGiorno
+        const docentiTotali = lezioniGiorno
           .filter(
             (r) =>
-              // r.Classe !== "POT" &&
-              !["COLLETTA O.", "BRUNO E."].includes(r.Docente)
+              ![
+                "COLLETTA O.",
+                "BRUNO E.",
+                "BATTIFARANO C.",
+                "RINA T.",
+              ].includes(r.Docente)
           )
           .map((r) => r.Docente);
-        const docentiResidui = [
-          ...new Set(docentiValidi.filter((d) => !assenti.includes(d))),
-        ].sort((a, b) => a.localeCompare(b, "it", { sensitivity: "base" }));
+        const docentiResidui = [...new Set(docentiTotali)].sort((a, b) =>
+          a.localeCompare(b, "it", { sensitivity: "base" })
+        );
 
-        // Crea le card dei docenti residui
         docentiResidui.forEach((d) => {
           const safe = d.replace(/[^a-zA-Z0-9_-]/g, "_");
-          // Mostra solo ore NON POT
           const ore = lezioniGiorno
-            .filter((r) => r.Docente === d /* && r.Classe !== "POT"*/)
+            .filter((r) => r.Docente === d && r.Classe !== "POT")
             .map((r) => `${r.OraInizio}-${r.OraFine}`)
             .filter((o) => o);
 
           resDiv.insertAdjacentHTML(
             "beforeend",
             `
-      <div class="col-12 col-md-6 mb-2">
-        <div class="form-check mb-1">
-          <input class="form-check-input residual-check" type="checkbox" id="res-${safe}">
-          <label class="form-check-label fw-semibold" for="res-${safe}">${d}</label>
-        </div>
-        <div id="hours-${safe}" class="hours-box" style="display:none;">
-          ${ore
-            .map(
-              (o) => `
-            <div class="form-check">
-              <input class="form-check-input hour-checkbox" type="checkbox" value="${o}" id="${safe}-${o}">
-              <label class="form-check-label" for="${safe}-${o}">${o}</label>
+            <div class="col-12 col-md-6 mb-2">
+              <div class="form-check mb-1">
+                <input class="form-check-input residual-check" type="checkbox" id="res-${safe}" ${
+              sceltePermessi[d] ? "checked" : ""
+            }>
+                <label class="form-check-label fw-semibold" for="res-${safe}">${d}</label>
+              </div>
+              <div id="hours-${safe}" class="hours-box" style="display:${
+              sceltePermessi[d] ? "block" : "none"
+            };">
+                ${
+                  ore.length > 0
+                    ? ore
+                        .map(
+                          (o) => `
+                      <div class="form-check">
+                        <input class="form-check-input hour-checkbox" type="checkbox" value="${o}" id="${safe}-${o}"
+                          ${
+                            sceltePermessi[d] && sceltePermessi[d].includes(o)
+                              ? "checked"
+                              : ""
+                          }>
+                        <label class="form-check-label" for="${safe}-${o}">${o}</label>
+                      </div>`
+                        )
+                        .join("")
+                    : `<p class="text-muted small mb-0">Nessuna ora curricolare</p>`
+                }
+              </div>
             </div>`
-            )
-            .join("")}
-        </div>
-      </div>`
           );
         });
 
-        // Listener per click su docenti residui
         document.querySelectorAll(".residual-check").forEach((chk) =>
           chk.addEventListener("change", (e) => {
+            const docente = chk.nextElementSibling.textContent;
             const div = document.getElementById(
               `hours-${chk.id.replace("res-", "")}`
             );
             if (e.target.checked) {
               div.style.display = "block";
+              sceltePermessi[docente] = sceltePermessi[docente] || [];
             } else {
               div.style.display = "none";
-              div
-                .querySelectorAll(".hour-checkbox")
-                .forEach((cb) => (cb.checked = false));
+              delete sceltePermessi[docente];
             }
             aggiornaBottone();
 
-            div
-              .querySelectorAll(".hour-checkbox")
-              .forEach((cb) => cb.addEventListener("change", aggiornaBottone));
+            div.querySelectorAll(".hour-checkbox").forEach((cb) =>
+              cb.addEventListener("change", () => {
+                sceltePermessi[docente] = sceltePermessi[docente] || [];
+                if (cb.checked) {
+                  sceltePermessi[docente].push(cb.value);
+                } else {
+                  sceltePermessi[docente] = sceltePermessi[docente].filter(
+                    (v) => v !== cb.value
+                  );
+                  if (sceltePermessi[docente].length === 0)
+                    delete sceltePermessi[docente];
+                }
+                aggiornaBottone();
+              })
+            );
           })
         );
       }
 
       function aggiornaBottone() {
-        const checked =
-          document.querySelectorAll(
-            ".docente-check:checked, .hour-checkbox:checked"
-          ).length > 0;
-        document.getElementById("createBtn").disabled = !checked;
-        document.getElementById("resetBtn").disabled = !checked;
+        const attivo =
+          scelteAssenze.size > 0 || Object.keys(sceltePermessi).length > 0;
+        document.getElementById("createBtn").disabled = !attivo;
+        document.getElementById("resetBtn").disabled = !attivo;
       }
 
       function resetScelte() {
-        // Deseleziona tutte le scelte
+        scelteAssenze.clear();
+        sceltePermessi = {};
         document
           .querySelectorAll("input[type=checkbox]")
           .forEach((cb) => (cb.checked = false));
@@ -385,29 +360,14 @@
           .forEach((b) => (b.style.display = "none"));
         document.getElementById("statusMsg").innerHTML = "";
         aggiornaBottone();
-
-        // Scroll fluido verso l’inizio della pagina
-        window.scrollTo({
-          top: 0,
-          behavior: "smooth",
-        });
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
 
       function creaCSV() {
-        const assenze = [
-          ...document.querySelectorAll(".docente-check:checked"),
-        ].map((c) => c.value);
-        const permessi = [];
-        document.querySelectorAll(".residual-check:checked").forEach((chk) => {
-          const docente = chk.nextElementSibling.textContent;
-          const safe = docente.replace(/[^a-zA-Z0-9_-]/g, "_");
-          const ore = [
-            ...document.querySelectorAll(
-              `#hours-${safe} .hour-checkbox:checked`
-            ),
-          ].map((o) => o.value);
-          if (ore.length) permessi.push({ docente, ore });
-        });
+        const assenze = Array.from(scelteAssenze);
+        const permessi = Object.entries(sceltePermessi).map(
+          ([docente, ore]) => ({ docente, ore })
+        );
 
         const dateSel = new Date(document.getElementById("dateInput").value);
         const giorno = dateSel
@@ -447,6 +407,14 @@
               "❌ Errore: " + err.message;
           });
       }
+
+      const floatingContainer = document.getElementById("floatingContainer");
+      window.addEventListener("scroll", () => {
+        const bottom =
+          document.body.scrollHeight - window.innerHeight - window.scrollY;
+        if (bottom < 150) floatingContainer.classList.add("hide");
+        else floatingContainer.classList.remove("hide");
+      });
     </script>
   </body>
 </html>
